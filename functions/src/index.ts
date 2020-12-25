@@ -1,7 +1,12 @@
 import * as functions from "firebase-functions";
 import * as admin from "firebase-admin";
 
-admin.initializeApp(functions.config().firebase);
+const serviceAccount = require("../config/firestore_secret_key.json");
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://lumis-project-test.firebaseio.com"
+});
 
 let db = admin.firestore();
 
@@ -23,9 +28,12 @@ export const helloWorld = functions
 
     create_collection(text, "buzz", 0);
 
-    const ary = read_collection();
+    const users = read_collection();
     // response.redirect(303, value.ref.toString());
-    response.send("Hello from Firebase!" + ary);
+
+    let names = get_names(users);
+
+    response.send("Hello from Firebase!" + names);
   });
 
 function create_collection(first: string, last: string, id: number) {
@@ -44,17 +52,27 @@ function create_collection(first: string, last: string, id: number) {
 }
 
 function read_collection() {
-  let ary: { key?: string } = {};
+  let document_data: { [key: string]: FirebaseFirestore.DocumentData } = {};
   db.collection("users")
     .get()
     .then(snapshot => {
       snapshot.forEach(doc => {
         console.log(doc.id, "=>", doc.data());
-        ary["key"] = doc.data().toString();
+        document_data[doc.id] = doc.data();
       });
-      return ary;
     })
     .catch(err => {
       console.error(err);
     });
+
+  return document_data;
+}
+
+function get_names(data: any) {
+  let names: any[] = [];
+  data.array.forEach((user: any) => {
+    console.log(user);
+    names.push(user);
+  });
+  return name;
 }
